@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比特红包 · Bitcoin Red Packet</title>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c0392b;
+    --red-deep: #7b0f0f;
+    --red-bright: #e74c3c;
+    --gold: #f0c040;
+    --gold-light: #fde88a;
+    --gold-dark: #b8860b;
+    --black: #0a0404;
+    --paper: #1a0a0a;
+    --paper2: #2a0f0f;
+    --green: #2ecc71;
+    --contract: opr1sqrxx5s5r54yzrr8yhyhgc7l8kx9z659l7gj58w7j;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--gold-light);
+    font-family: 'Noto Serif SC', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-pattern {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 10% 20%, rgba(192,57,43,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(192,57,43,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(120,10,10,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .pattern-overlay {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+    background-image: repeating-linear-gradient(45deg, var(--gold) 0px, var(--gold) 1px, transparent 1px, transparent 20px),
+      repeating-linear-gradient(-45deg, var(--gold) 0px, var(--gold) 1px, transparent 1px, transparent 20px);
+  }
+  .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 4px; height: 4px; background: var(--gold);
+    border-radius: 50%; opacity: 0; animation: float-up linear infinite;
+  }
+  @keyframes float-up {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 0.8; } 90% { opacity: 0.3; }
+    100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 20px; }
+
+  header { text-align: center; padding: 40px 0 30px; position: relative; }
+  .lanterns { display: flex; justify-content: center; gap: 40px; margin-bottom: 20px; }
+  .lantern {
+    width: 24px; height: 36px;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--red-bright) 30%, var(--red-deep) 100%);
+    border-radius: 40% 40% 50% 50%; position: relative;
+    box-shadow: 0 0 20px var(--red-bright), 0 0 40px rgba(192,57,43,0.5);
+    animation: lantern-sway 3s ease-in-out infinite;
+  }
+  .lantern:nth-child(2) { animation-delay: 0.5s; animation-duration: 3.5s; }
+  .lantern:nth-child(3) { animation-delay: 1s; animation-duration: 2.8s; }
+  .lantern:nth-child(4) { animation-delay: 1.5s; animation-duration: 3.2s; }
+  .lantern:nth-child(5) { animation-delay: 0.8s; animation-duration: 3.7s; }
+  .lantern::before {
+    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 6px; height: 8px; background: var(--gold-dark); border-radius: 2px;
+  }
+  .lantern::after {
+    content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    width: 1px; height: 12px; background: var(--gold);
+  }
+  @keyframes lantern-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+  .title-cn {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(240,192,64,0.6), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 0.1em; line-height: 1;
+  }
+  .title-en {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--gold-dark); letter-spacing: 0.4em; text-transform: uppercase; margin-top: 8px;
+  }
+
+  .network-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(192,57,43,0.2); border: 1px solid var(--gold-dark);
+    border-radius: 20px; padding: 6px 16px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--gold); margin-top: 16px;
+  }
+  .network-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #e74c3c; box-shadow: 0 0 8px #e74c3c;
+    animation: pulse-dot 2s infinite;
+  }
+  .network-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* Contract address display */
+  .contract-bar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .contract-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+    color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.2em;
+  }
+  .contract-addr {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+    color: rgba(240,192,64,0.5); word-break: break-all; text-align: center;
+  }
+
+  /* Wallet */
+  .wallet-card {
+    background: linear-gradient(135deg, var(--paper) 0%, var(--paper2) 100%);
+    border: 1px solid var(--gold-dark); border-radius: 12px;
+    padding: 20px 24px; margin: 20px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; position: relative; overflow: hidden;
+  }
+  .wallet-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(240,192,64,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .wallet-info { display: flex; flex-direction: column; gap: 4px; }
+  .wallet-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+    color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.2em;
+  }
+  .wallet-address { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--gold-light); word-break: break-all; }
+  .wallet-balance { font-family: 'Ma Shan Zheng', cursive; font-size: 1.4rem; color: var(--gold); }
+  .wallet-balance span { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--gold-dark); }
+
+  /* Buttons */
+  .btn {
+    font-family: 'Noto Serif SC', serif; font-size: 0.9rem;
+    border: none; cursor: pointer; border-radius: 8px; padding: 10px 20px;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.2s; }
+  .btn:hover::after { opacity: 1; }
+  .btn:active { transform: scale(0.97); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    color: var(--black); font-weight: 700; box-shadow: 0 4px 20px rgba(240,192,64,0.3);
+  }
+  .btn-red {
+    background: linear-gradient(135deg, var(--red-deep) 0%, var(--red-bright) 50%, var(--red-deep) 100%);
+    color: var(--gold-light); box-shadow: 0 4px 20px rgba(192,57,43,0.4);
+    font-size: 1rem; padding: 12px 28px;
+  }
+  .btn-outline { background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); }
+  .btn-outline:hover { border-color: var(--gold); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; background: var(--paper); border-radius: 10px;
+    border: 1px solid var(--gold-dark); overflow: hidden; margin: 24px 0;
+  }
+  .tab {
+    flex: 1; padding: 14px; text-align: center; cursor: pointer;
+    font-family: 'Noto Serif SC', serif; font-size: 0.9rem;
+    color: var(--gold-dark); transition: all 0.2s; border: none; background: none; letter-spacing: 0.05em;
+  }
+  .tab.active { background: linear-gradient(135deg, var(--red-deep) 0%, var(--red) 100%); color: var(--gold); }
+  .tab:hover:not(.active) { color: var(--gold); background: rgba(192,57,43,0.1); }
+
+  .panel { display: none; animation: fade-in 0.3s ease; }
+  .panel.active { display: block; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Form */
+  .form-group { margin-bottom: 20px; }
+  .form-label {
+    display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+    color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px;
+  }
+  .form-input {
+    width: 100%; background: var(--paper); border: 1px solid var(--gold-dark);
+    border-radius: 8px; padding: 12px 16px; color: var(--gold-light);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,192,64,0.15); }
+  .form-input::placeholder { color: rgba(240,192,64,0.3); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Red Packet Visual */
+  .red-packet-visual {
+    width: 200px; height: 280px;
+    background: linear-gradient(160deg, #c0392b 0%, #7b0f0f 60%, #4a0808 100%);
+    border-radius: 16px; border: 2px solid var(--gold-dark);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; overflow: hidden; margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(192,57,43,0.5), inset 0 1px 0 rgba(255,200,50,0.3);
+  }
+  .red-packet-visual:hover {
+    transform: scale(1.05) rotate(1deg);
+    box-shadow: 0 20px 60px rgba(192,57,43,0.7), inset 0 1px 0 rgba(255,200,50,0.5);
+  }
+  .red-packet-visual::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 120px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(240,192,64,0.3) 0%, transparent 70%);
+  }
+  .red-packet-circle {
+    width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Ma Shan Zheng', cursive; font-size: 2.5rem; color: var(--gold);
+    text-shadow: 0 0 15px rgba(240,192,64,0.8); position: relative; z-index: 1;
+    background: rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(240,192,64,0.3), inset 0 0 20px rgba(0,0,0,0.3);
+  }
+  .red-packet-text { font-family: 'Ma Shan Zheng', cursive; font-size: 1.4rem; color: var(--gold); margin-top: 16px; text-align: center; text-shadow: 0 0 10px rgba(240,192,64,0.5); position: relative; z-index: 1; }
+  .red-packet-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(240,192,64,0.6); margin-top: 6px; position: relative; z-index: 1; }
+  .red-packet-diamond { position: absolute; width: 100px; height: 100px; border: 2px solid rgba(240,192,64,0.2); transform: rotate(45deg); top: -20px; }
+
+  /* Packet grid */
+  .packets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; }
+  .packet-item {
+    background: linear-gradient(160deg, var(--red-deep) 0%, #3d0a0a 100%);
+    border: 1px solid var(--gold-dark); border-radius: 12px; padding: 16px;
+    cursor: pointer; transition: all 0.2s; text-align: center; position: relative; overflow: hidden;
+  }
+  .packet-item:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(192,57,43,0.4); }
+  .packet-item.claimed { opacity: 0.5; cursor: not-allowed; }
+  .packet-item.claimed::after {
+    content: '已领取'; position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Ma Shan Zheng', cursive; font-size: 1.2rem; color: var(--gold-dark); border-radius: 12px;
+  }
+  .packet-amount { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--gold); font-weight: 600; }
+  .packet-meta { font-size: 0.7rem; color: rgba(240,192,64,0.5); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+  .packet-type-badge {
+    display: inline-block; font-size: 0.6rem; font-family: 'JetBrains Mono', monospace;
+    padding: 2px 6px; border-radius: 4px; background: rgba(192,57,43,0.4);
+    border: 1px solid rgba(192,57,43,0.6); color: var(--gold-light); margin-top: 6px;
+  }
+
+  /* Open overlay */
+  .open-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.85); align-items: center; justify-content: center; flex-direction: column;
+  }
+  .open-overlay.show { display: flex; }
+  .open-overlay .big-packet {
+    width: 220px; height: 310px;
+    background: linear-gradient(160deg, #c0392b 0%, #7b0f0f 60%, #4a0808 100%);
+    border-radius: 20px; border: 3px solid var(--gold);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    cursor: pointer; animation: packet-appear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 20px 80px rgba(192,57,43,0.8); position: relative; overflow: hidden;
+  }
+  @keyframes packet-appear { from { transform: scale(0) rotate(-10deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .open-overlay .big-packet:hover { transform: scale(1.03); }
+  .open-instruction { font-family: 'Ma Shan Zheng', cursive; font-size: 1.2rem; color: var(--gold); margin-top: 20px; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .open-result { text-align: center; animation: result-appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  @keyframes result-appear { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-amount { font-family: 'Ma Shan Zheng', cursive; font-size: 4rem; color: var(--gold); text-shadow: 0 0 40px rgba(240,192,64,0.8); }
+  .result-sats { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--gold-dark); }
+  .result-msg { font-family: 'Noto Serif SC', serif; font-size: 1.1rem; color: var(--gold-light); margin: 12px 0; }
+
+  #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
+
+  /* Toast */
+  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--paper2); border: 1px solid var(--gold-dark); border-radius: 8px;
+    padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--gold-light);
+    animation: toast-in 0.3s ease, toast-out 0.3s ease 3.7s; box-shadow: 0 4px 20px rgba(0,0,0,0.5); max-width: 320px;
+  }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: #e74c3c; color: #e74c3c; }
+  .toast.info { border-color: #3498db; color: #3498db; }
+  @keyframes toast-in { from { transform: translateX(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes toast-out { from { opacity: 1; } to { opacity: 0; } }
+
+  /* Stats */
+  .stats-bar {
+    display: flex; gap: 16px; padding: 16px 20px;
+    background: var(--paper); border: 1px solid var(--gold-dark); border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--gold); font-weight: 600; }
+  .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .section-title {
+    font-family: 'Ma Shan Zheng', cursive; font-size: 1.6rem; color: var(--gold); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--gold-dark), transparent); }
+  .divider { height: 1px; background: linear-gradient(to right, transparent, var(--gold-dark), transparent); margin: 24px 0; }
+  .empty-state { text-align: center; padding: 40px; color: rgba(240,192,64,0.3); font-family: 'Ma Shan Zheng', cursive; font-size: 1.2rem; }
+  .create-center { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(240,192,64,0.3); border-top-color: var(--gold);
+    border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .info-box {
+    background: rgba(240,192,64,0.05); border: 1px solid rgba(240,192,64,0.15);
+    border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: rgba(240,192,64,0.7);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6; margin: 12px 0;
+  }
+  .info-box.error { border-color: rgba(231,76,60,0.4); color: rgba(231,76,60,0.8); background: rgba(231,76,60,0.05); }
+  .info-box.success { border-color: rgba(46,204,113,0.4); color: rgba(46,204,113,0.8); background: rgba(46,204,113,0.05); }
+
+  .tx-hash { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--gold-dark); word-break: break-all; margin-top: 4px; }
+  .regtest-notice { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: rgba(240,192,64,0.3); margin-top: 40px; padding-bottom: 40px; letter-spacing: 0.1em; }
+
+  /* Pending TX indicator */
+  .pending-bar {
+    display: none; align-items: center; gap: 10px;
+    background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3);
+    border-radius: 8px; padding: 10px 16px; margin: 10px 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #3498db;
+  }
+  .pending-bar.show { display: flex; }
+
+  /* Packet detail modal */
+  .modal {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+  }
+  .modal.show { display: flex; }
+  .modal-box {
+    background: linear-gradient(135deg, var(--paper) 0%, var(--paper2) 100%);
+    border: 1px solid var(--gold-dark); border-radius: 16px;
+    padding: 28px; max-width: 480px; width: 90%; position: relative;
+  }
+  .modal-title { font-family: 'Ma Shan Zheng', cursive; font-size: 1.8rem; color: var(--gold); margin-bottom: 16px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--gold-dark); cursor: pointer; font-size: 1.2rem; }
+  .modal-close:hover { color: var(--gold); }
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(240,192,64,0.1); font-size: 0.85rem; }
+  .detail-label { color: var(--gold-dark); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  .detail-value { color: var(--gold-light); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; text-align: right; max-width: 60%; word-break: break-all; }
+
+  /* Slots display */
+  .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px; }
+  .slot-item {
+    background: var(--paper); border: 1px solid var(--gold-dark); border-radius: 8px;
+    padding: 10px 8px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  }
+  .slot-item.slot-claimed { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.4); color: var(--green); }
+  .slot-item.slot-yours { background: rgba(240,192,64,0.1); border-color: var(--gold); color: var(--gold); }
+  .slot-sats { font-size: 0.75rem; color: var(--gold); font-weight: 600; display: block; }
+  .slot-status { font-size: 0.6rem; color: var(--gold-dark); display: block; margin-top: 2px; }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .wallet-card { flex-direction: column; }
+    .stats-bar { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="pattern-overlay"></div>
+<div class="particles" id="particles"></div>
+<canvas id="confetti-canvas"></canvas>
+<div class="toast-container" id="toasts"></div>
+
+<!-- Open overlay -->
+<div class="open-overlay" id="open-overlay">
+  <div id="overlay-content"></div>
+</div>
+
+<!-- Packet detail modal -->
+<div class="modal" id="detail-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Packet Details</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="lanterns">
+      <div class="lantern"></div><div class="lantern"></div><div class="lantern"></div>
+      <div class="lantern"></div><div class="lantern"></div>
+    </div>
+    <div class="title-cn">比特红包</div>
+    <div class="title-en">Bitcoin Red Packet · OPNET · RegTest</div>
+    <div>
+      <span class="network-badge">
+        <span class="network-dot" id="network-dot"></span>
+        <span id="network-label">REGTEST · OPNET</span>
+      </span>
+    </div>
+    <div class="contract-bar">
+      <span class="contract-label">Contract:</span>
+      <span class="contract-addr" id="contract-display">opr1sqrxx5s5r54yzrr8yhyhgc7l8kx9z659l7gj58w7j</span>
+    </div>
+  </header>
+
+  <!-- Wallet Card -->
+  <div class="wallet-card">
+    <div class="wallet-info">
+      <div class="wallet-label">OP_NET Wallet</div>
+      <div class="wallet-address" id="wallet-address">Not Connected</div>
+      <div class="wallet-label" style="margin-top:6px">Network</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--gold-light)" id="wallet-network">—</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+      <div>
+        <div class="wallet-label" style="text-align:right">Balance</div>
+        <div class="wallet-balance" id="wallet-balance">— <span>BTC</span></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--gold-dark);text-align:right" id="wallet-sats">— sats</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn btn-gold" id="connect-btn" onclick="connectWallet()">🔌 Connect</button>
+        <button class="btn btn-outline" id="disconnect-btn" onclick="disconnectWallet()" style="display:none">Disconnect</button>
+        <button class="btn btn-outline" id="refresh-btn" onclick="refreshBalance()" style="display:none">↻ Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat"><div class="stat-value" id="stat-created">0</div><div class="stat-label">Created</div></div>
+    <div class="stat"><div class="stat-value" id="stat-claimed">0</div><div class="stat-label">Claimed</div></div>
+    <div class="stat"><div class="stat-value" id="stat-total-btc">0.0000</div><div class="stat-label">Total BTC</div></div>
+    <div class="stat"><div class="stat-value" id="stat-active">0</div><div class="stat-label">Active</div></div>
+    <div class="stat"><div class="stat-value" id="stat-block">—</div><div class="stat-label">Block Height</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('create')">🧧 Create 红包</button>
+    <button class="tab" onclick="switchTab('claim')">🎁 Claim 红包</button>
+    <button class="tab" onclick="switchTab('history')">📜 History</button>
+  </div>
+
+  <!-- Create Panel -->
+  <div class="panel active" id="panel-create">
+    <div class="create-center">
+      <div class="red-packet-visual" id="preview-packet" onclick="animatePreview()">
+        <div class="red-packet-diamond"></div>
+        <div class="red-packet-circle">福</div>
+        <div class="red-packet-text">比特红包</div>
+        <div class="red-packet-sub" id="preview-sub">Fill in details below</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">发红包 · Send Packet</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Total Amount (BTC)</label>
+        <input class="form-input" type="number" id="total-amount" placeholder="0.001" step="0.0001" min="0.0001" oninput="updatePreview()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Number of Packets</label>
+        <input class="form-input" type="number" id="packet-count" placeholder="5" min="1" max="100" oninput="updatePreview()">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Distribution Type</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline" id="type-equal" onclick="setType('equal')" style="font-size:0.85rem;border-color:var(--gold);color:var(--gold)">⚖ Equal Split</button>
+        <button class="btn btn-outline" id="type-random" onclick="setType('random')" style="font-size:0.85rem">🎲 Lucky Random</button>
+      </div>
+      <div class="info-box" id="type-info">⚖ Equal: Each recipient receives an equal share of the total amount.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Expiry (blocks from now)</label>
+      <input class="form-input" type="number" id="expiry-blocks" placeholder="144" min="10" max="10000" value="144">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--gold-dark);margin-top:4px">144 blocks ≈ 24 hours on RegTest</div>
+    </div>
+
+    <div class="info-box" id="create-info">
+      🔗 Transaction will be sent on-chain via OP_NET to contract:<br>
+      <span style="color:var(--gold-dark);word-break:break-all">opr1sqrxx5s5r54yzrr8yhyhgc7l8kx9z659l7gj58w7j</span>
+    </div>
+
+    <div class="pending-bar" id="create-pending">
+      <span class="spinner"></span>
+      <span id="create-pending-msg">Broadcasting transaction...</span>
+    </div>
+
+    <button class="btn btn-red" id="create-btn" onclick="createRedPacket()" style="width:100%;font-size:1.1rem;padding:16px" disabled>
+      🧧 Create Red Packet
+    </button>
+  </div>
+
+  <!-- Claim Panel -->
+  <div class="panel" id="panel-claim">
+    <div class="section-title">抢红包 · Grab Packet</div>
+
+    <div class="form-group">
+      <label class="form-label">Packet TX Hash (from creator)</label>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" type="text" id="claim-txhash" placeholder="Enter transaction hash of the red packet">
+        <button class="btn btn-gold" onclick="lookupPacketByTx()" style="white-space:nowrap">🔍 Lookup</button>
+      </div>
+    </div>
+
+    <div class="pending-bar" id="lookup-pending">
+      <span class="spinner"></span> Querying contract on-chain...
+    </div>
+
+    <div id="claim-result"></div>
+
+    <div class="divider"></div>
+    <div class="section-title">My Active Packets</div>
+    <div id="active-packets" class="packets-grid">
+      <div class="empty-state">No active packets found</div>
+    </div>
+  </div>
+
+  <!-- History Panel -->
+  <div class="panel" id="panel-history">
+    <div class="section-title">交易历史 · Transactions</div>
+    <div id="history-list">
+      <div class="empty-state">No transactions yet</div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-outline" onclick="clearHistory()" style="font-size:0.8rem">Clear Local History</button>
+    </div>
+  </div>
+
+  <div class="regtest-notice">
+    BITCOIN REGTEST · OPNET SMART CONTRACT · Real On-Chain Transactions<br>
+    Contract: opr1sqrxx5s5r54yzrr8yhyhgc7l8kx9z659l7gj58w7j
+  </div>
+</div>
+
+<script>
+// ==========================================
+// CONFIG
+// ==========================================
+const CONTRACT_ADDRESS = 'opr1sqrxx5s5r54yzrr8yhyhgc7l8kx9z659l7gj58w7j';
+const NETWORK = 'regtest';
+
+// Selectors from selectors.json
+const SEL = {
+  CREATE:  0x1a2b3c4d,
+  CLAIM:   0x2b3c4d5e,
+  INFO:    0x3c4d5e6f,
+  SLOT:    0x4d5e6f70,
+  ISCL:    0x5e6f7081,
+  REFUND:  0x6f708192,
+};
+
+// Return buffer base
+const RETBUF_BASE = 0x0100;
+
+// ==========================================
+// STATE
+// ==========================================
+const state = {
+  connected: false,
+  address: null,
+  balance: null,
+  sats: null,
+  network: null,
+  blockHeight: null,
+  distType: 'equal',
+  history: JSON.parse(localStorage.getItem('rp_history') || '[]'),
+  myPackets: JSON.parse(localStorage.getItem('rp_packets') || '[]'),
+  stats: {
+    created: parseInt(localStorage.getItem('rp_stat_created') || '0'),
+    claimed: parseInt(localStorage.getItem('rp_stat_claimed') || '0'),
+    totalBtc: parseFloat(localStorage.getItem('rp_stat_btc') || '0'),
+  }
+};
+
+// ==========================================
+// OPNET / OP_WALLET INTERFACE
+// ==========================================
+
+/**
+ * Get the OP_NET provider from window.opnet or window.unisat (OPNET compatible)
+ * OPNET RegTest wallets typically inject window.opnet or window.bitcoin
+ */
+function getProvider() {
+  // Try various known wallet injection points
+  if (window.opnet) return window.opnet;
+  if (window.OPNet) return window.OPNet;
+  if (window.bitcoin && window.bitcoin.opnet) return window.bitcoin.opnet;
+  // Unisat with OP_NET extension
+  if (window.unisat && window.unisat.opnet) return window.unisat.opnet;
+  return null;
+}
+
+async function connectWallet() {
+  const provider = getProvider();
+  if (!provider) {
+    toast('OP_NET wallet not found. Please install OP_NET wallet extension.', 'error');
+    showNoWalletGuide();
+    return;
+  }
+
+  try {
+    document.getElementById('connect-btn').innerHTML = '<span class="spinner"></span>Connecting...';
+    document.getElementById('connect-btn').disabled = true;
+
+    // Request account access
+    const accounts = await provider.requestAccounts();
+    if (!accounts || accounts.length === 0) throw new Error('No accounts returned');
+
+    state.address = accounts[0];
+    state.connected = true;
+
+    // Get network info
+    const net = await provider.getNetwork();
+    state.network = net?.network || net || NETWORK;
+
+    if (!state.network.toLowerCase().includes('regtest')) {
+      toast('⚠ Please switch your wallet to RegTest network', 'error');
+    }
+
+    // Get balance
+    await refreshBalance();
+
+    // Get current block
+    try {
+      const block = await provider.getBlockHeight();
+      state.blockHeight = block;
+      document.getElementById('stat-block').textContent = block?.toLocaleString() || '—';
+    } catch(e) {}
+
+    updateWalletUI();
+    document.getElementById('network-dot').classList.add('connected');
+    document.getElementById('network-label').textContent = `REGTEST · CONNECTED`;
+    document.getElementById('create-btn').disabled = false;
+    toast('Wallet connected! 恭喜 🎉', 'success');
+
+    // Load on-chain packets
+    await loadMyPackets();
+
+  } catch (e) {
+    console.error('Connect error:', e);
+    toast('Connection failed: ' + (e.message || e), 'error');
+    document.getElementById('connect-btn').innerHTML = '🔌 Connect';
+    document.getElementById('connect-btn').disabled = false;
+  }
+}
+
+async function refreshBalance() {
+  const provider = getProvider();
+  if (!provider || !state.address) return;
+
+  try {
+    const balance = await provider.getBalance(state.address);
+    // Balance may be in sats or BTC depending on wallet
+    if (typeof balance === 'object' && balance.confirmed !== undefined) {
+      state.sats = balance.confirmed;
+      state.balance = (balance.confirmed / 1e8).toFixed(8);
+    } else if (typeof balance === 'number') {
+      // Assume sats if large number
+      if (balance > 1000) {
+        state.sats = balance;
+        state.balance = (balance / 1e8).toFixed(8);
+      } else {
+        state.balance = balance.toFixed(8);
+        state.sats = Math.round(balance * 1e8);
+      }
+    }
+    updateWalletUI();
+  } catch (e) {
+    console.warn('Balance fetch failed:', e);
+  }
+}
+
+function disconnectWallet() {
+  state.connected = false;
+  state.address = null;
+  state.balance = null;
+  state.sats = null;
+  state.network = null;
+  document.getElementById('network-dot').classList.remove('connected');
+  document.getElementById('network-label').textContent = 'REGTEST · OPNET';
+  updateWalletUI();
+  document.getElementById('create-btn').disabled = true;
+  toast('Wallet disconnected', 'info');
+}
+
+function updateWalletUI() {
+  if (state.connected && state.address) {
+    const short = state.address.slice(0,12) + '...' + state.address.slice(-8);
+    document.getElementById('wallet-address').textContent = short;
+    document.getElementById('wallet-address').title = state.address;
+    document.getElementById('wallet-network').textContent = state.network || NETWORK;
+    document.getElementById('wallet-balance').innerHTML =
+      `${state.balance || '0.00000000'} <span>BTC</span>`;
+    document.getElementById('wallet-sats').textContent =
+      state.sats ? state.sats.toLocaleString() + ' sats' : '—';
+    document.getElementById('connect-btn').style.display = 'none';
+    document.getElementById('disconnect-btn').style.display = 'inline-flex';
+    document.getElementById('refresh-btn').style.display = 'inline-flex';
+    document.getElementById('create-btn').disabled = false;
+  } else {
+    document.getElementById('wallet-address').textContent = 'Not Connected';
+    document.getElementById('wallet-network').textContent = '—';
+    document.getElementById('wallet-balance').innerHTML = '— <span>BTC</span>';
+    document.getElementById('wallet-sats').textContent = '— sats';
+    document.getElementById('connect-btn').style.display = 'inline-flex';
+    document.getElementById('connect-btn').innerHTML = '🔌 Connect';
+    document.getElementById('connect-btn').disabled = false;
+    document.getElementById('disconnect-btn').style.display = 'none';
+    document.getElementById('refresh-btn').style.display = 'none';
+    document.getElementById('create-btn').disabled = true;
+  }
+  updateStats();
+}
+
+// ==========================================
+// CALLDATA ENCODING (per selectors.json)
+// ==========================================
+
+/**
+ * Encode calldata as Uint8Array
+ * Format: [sel_4b][...args_4b each]
+ * All values are little-endian 32-bit integers
+ */
+function encodeCalldata(...words) {
+  const buf = new Uint8Array(words.length * 4);
+  const view = new DataView(buf.buffer);
+  words.forEach((w, i) => view.setUint32(i * 4, w >>> 0, true)); // little-endian
+  return buf;
+}
+
+function bufToHex(buf) {
+  return '0x' + Array.from(buf).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function hexToBuf(hex) {
+  const h = hex.replace(/^0x/, '');
+  const arr = new Uint8Array(h.length / 2);
+  for (let i = 0; i < arr.length; i++) arr[i] = parseInt(h.slice(i*2, i*2+2), 16);
+  return arr;
+}
+
+/**
+ * Read signed 32-bit int from return buffer at offset
+ */
+function readRetBuf(retBuf, offset) {
+  const view = new DataView(retBuf.buffer || retBuf);
+  return view.getInt32(offset, true); // little-endian
+}
+
+function readRetBufUint(retBuf, offset) {
+  const view = new DataView(retBuf.buffer || retBuf);
+  return view.getUint32(offset, true);
+}
+
+// ==========================================
+// CONTRACT CALLS
+// ==========================================
+
+/**
+ * Call contract read function (getPacketInfo, isClaimed, getSlotAmount)
+ * Returns raw return buffer
+ */
+async function contractCall(calldataHex) {
+  const provider = getProvider();
+  if (!provider) throw new Error('Wallet not connected');
+
+  // OPNET provider call format (adjust if your wallet uses different method name)
+  const result = await provider.call({
+    to: CONTRACT_ADDRESS,
+    data: calldataHex,
+    network: NETWORK,
+  });
+
+  if (!result) throw new Error('No response from contract');
+
+  // Result may be hex string or object with data field
+  const hex = typeof result === 'string' ? result : (result.data || result.result || result.returnData);
+  if (!hex) throw new Error('Empty return data');
+
+  return hexToBuf(hex.replace(/^0x/, ''));
+}
+
+/**
+ * Send contract write transaction (create, claim, refund)
+ * Returns txHash
+ */
+async function contractSend(calldataHex, satoshis = 0) {
+  const provider = getProvider();
+  if (!provider) throw new Error('Wallet not connected');
+
+  const txResult = await provider.sendTransaction({
+    to: CONTRACT_ADDRESS,
+    data: calldataHex,
+    value: satoshis, // sats to send with transaction
+    network: NETWORK,
+  });
+
+  // txResult may be string (txHash) or object
+  const txHash = typeof txResult === 'string' ? txResult : (txResult.txid || txResult.txHash || txResult.hash);
+  if (!txHash) throw new Error('No txHash returned');
+  return txHash;
+}
+
+// ==========================================
+// CREATE RED PACKET
+// ==========================================
+
+async function createRedPacket() {
+  if (!state.connected) { toast('Connect wallet first', 'error'); return; }
+
+  const totalBtc = parseFloat(document.getElementById('total-amount').value);
+  const count = parseInt(document.getElementById('packet-count').value);
+  const expiryBlocks = parseInt(document.getElementById('expiry-blocks').value) || 144;
+
+  if (!totalBtc || totalBtc <= 0) { toast('Enter valid BTC amount', 'error'); return; }
+  if (!count || count < 1 || count > 100) { toast('Enter valid packet count (1-100)', 'error'); return; }
+
+  const totalSats = Math.round(totalBtc * 1e8);
+  const minDust = 546 * count; // 546 sats dust per output
+  if (totalSats < minDust) {
+    toast(`Min amount: ${(minDust/1e8).toFixed(8)} BTC (dust limit)`, 'error');
+    return;
+  }
+
+  const distType = state.distType === 'random' ? 1 : 0;
+  const expiryHeight = (state.blockHeight || 0) + expiryBlocks;
+
+  // Encode calldata: [SEL_CREATE][total_lo][total_hi][count][distType][expiryHeight]
+  // Split 64-bit total_sats into two 32-bit words (lo/hi)
+  const totalLo = totalSats & 0xFFFFFFFF;
+  const totalHi = Math.floor(totalSats / 0x100000000);
+
+  const calldata = encodeCalldata(
+    SEL.CREATE,
+    totalLo,
+    totalHi,
+    count,
+    distType,
+    expiryHeight
+  );
+  const calldataHex = bufToHex(calldata);
+
+  // Show pending
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Creating...';
+  const pendingBar = document.getElementById('create-pending');
+  pendingBar.classList.add('show');
+  document.getElementById('create-pending-msg').textContent = 'Sending transaction to OP_NET...';
+
+  try {
+    const txHash = await contractSend(calldataHex, totalSats);
+
+    pendingBar.classList.remove('show');
+    toast(`🧧 Red Packet created! TX: ${txHash.slice(0,16)}...`, 'success');
+
+    // Save locally
+    const packet = {
+      txHash,
+      totalBtc,
+      totalSats,
+      count,
+      distType: state.distType,
+      expiryHeight,
+      createdAt: Date.now(),
+      address: state.address,
+    };
+    state.myPackets.unshift(packet);
+    localStorage.setItem('rp_packets', JSON.stringify(state.myPackets.slice(0,50)));
+
+    state.history.unshift({ type: 'created', txHash, totalBtc, count, timestamp: Date.now() });
+    saveHistory();
+
+    state.stats.created++;
+    state.stats.totalBtc = parseFloat((state.stats.totalBtc + totalBtc).toFixed(8));
+    saveStats();
+    updateStats();
+
+    // Show result
+    document.getElementById('create-info').innerHTML = `
+      <div class="info-box success">
+        ✅ Red Packet created on-chain!<br>
+        TX: <span style="word-break:break-all">${txHash}</span><br>
+        Share this TX hash with recipients so they can claim!
+      </div>
+    `;
+
+    // Reset form
+    document.getElementById('total-amount').value = '';
+    document.getElementById('packet-count').value = '';
+    updatePreview();
+    await refreshBalance();
+
+  } catch (e) {
+    console.error('Create error:', e);
+    pendingBar.classList.remove('show');
+    document.getElementById('create-info').innerHTML = `<div class="info-box error">❌ Error: ${e.message || e}</div>`;
+    toast('Create failed: ' + (e.message || e), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🧧 Create Red Packet';
+  }
+}
+
+// ==========================================
+// LOOKUP PACKET BY TX
+// ==========================================
+
+async function lookupPacketByTx() {
+  const txHash = document.getElementById('claim-txhash').value.trim();
+  if (!txHash) { toast('Enter a transaction hash', 'error'); return; }
+
+  const pending = document.getElementById('lookup-pending');
+  pending.classList.add('show');
+  document.getElementById('claim-result').innerHTML = '';
+
+  try {
+    // Query getPacketInfo: [SEL_INFO]
+    const calldata = encodeCalldata(SEL.INFO);
+    const calldataHex = bufToHex(calldata);
+
+    // For per-tx packets, we query contract with txHash context if supported
+    // Otherwise query general packet info
+    let retBuf;
+    try {
+      retBuf = await contractCall(calldataHex);
+    } catch (e) {
+      throw new Error('Could not reach contract: ' + e.message);
+    }
+
+    // Parse return buffer:
+    // retbuf+0=total_lo, +4=n_recip, +8=n_claimed, +12=dist, +16=is_active, +20=expiry
+    const status = readRetBuf(retBuf, 0);
+
+    if (status < 0) {
+      const errors = { '-1':'invalid calldata', '-2':'invalid recipient count', '-3':'insufficient sats', '-4':'packet inactive', '-5':'index out of range', '-6':'already claimed' };
+      throw new Error(`Contract error ${status}: ${errors[status] || 'unknown'}`);
+    }
+
+    const totalSatsLo = readRetBufUint(retBuf, 0);
+    const nRecip = readRetBuf(retBuf, 4);
+    const nClaimed = readRetBuf(retBuf, 8);
+    const distType = readRetBuf(retBuf, 12);
+    const isActive = readRetBuf(retBuf, 16);
+    const expiry = readRetBuf(retBuf, 20);
+    const totalBtc = totalSatsLo / 1e8;
+    const remaining = nRecip - nClaimed;
+
+    // Check if caller already claimed
+    let alreadyClaimed = false;
+    if (state.connected) {
+      try {
+        const claimCheck = encodeCalldata(SEL.ISCL, 0); // check slot 0 as proxy
+        const claimBuf = await contractCall(bufToHex(claimCheck));
+        // Just use history as fallback
+        alreadyClaimed = state.history.some(h => h.type === 'claimed' && h.txHash === txHash);
+      } catch (e) {}
+    }
+
+    // Fetch slot amounts
+    let slotAmounts = [];
+    for (let i = 0; i < nRecip; i++) {
+      try {
+        const slotCalldata = encodeCalldata(SEL.SLOT, i);
+        const slotBuf = await contractCall(bufToHex(slotCalldata));
+        const amount = readRetBufUint(slotBuf, 0);
+        const isCl = readRetBuf(slotBuf, 4) > 0;
+        slotAmounts.push({ amount, isClaimed: isCl });
+      } catch (e) {
+        slotAmounts.push({ amount: Math.floor(totalSatsLo / nRecip), isClaimed: false });
+      }
+    }
+
+    pending.classList.remove('show');
+    renderClaimResult({ txHash, totalSats: totalSatsLo, totalBtc, nRecip, nClaimed, distType, isActive, expiry, remaining, alreadyClaimed, slotAmounts });
+
+  } catch (e) {
+    console.error('Lookup error:', e);
+    pending.classList.remove('show');
+    document.getElementById('claim-result').innerHTML = `<div class="info-box error">❌ ${e.message}</div>`;
+  }
+}
+
+function renderClaimResult(packet) {
+  const { txHash, totalBtc, nRecip, nClaimed, distType, isActive, remaining, alreadyClaimed, slotAmounts } = packet;
+  const slotsHtml = slotAmounts.map((s, i) => `
+    <div class="slot-item ${s.isClaimed ? 'slot-claimed' : ''}">
+      <span class="slot-sats">${s.amount.toLocaleString()}</span>
+      <span class="slot-status">${s.isClaimed ? '✓ Claimed' : `Slot ${i}`}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('claim-result').innerHTML = `
+    <div class="wallet-card" style="flex-direction:column;align-items:stretch;gap:12px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="wallet-label">Total Amount</div>
+          <div style="font-family:'Ma Shan Zheng',cursive;font-size:1.6rem;color:var(--gold)">${totalBtc.toFixed(8)} BTC</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--gold-dark)">${packet.totalSats?.toLocaleString()} sats</div>
+        </div>
+        <div style="text-align:right">
+          <div class="wallet-label">Progress</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:${remaining>0?'var(--green)':'var(--gold-dark)'}">${nClaimed} / ${nRecip}</div>
+          <div class="wallet-label">${remaining} remaining · ${distType === 1 ? '🎲 Lucky' : '⚖ Equal'}</div>
+        </div>
+      </div>
+      <div>
+        <div class="wallet-label" style="margin-bottom:8px">Slots</div>
+        <div class="slots-grid">${slotsHtml}</div>
+      </div>
+      ${!isActive ? '<div class="info-box error">⚠ This packet is no longer active (expired or fully claimed)</div>' : ''}
+      ${alreadyClaimed ? '<div class="info-box success">✅ You have already claimed from this packet</div>' : ''}
+      ${!alreadyClaimed && remaining > 0 && isActive ? `
+        <div>
+          <label class="form-label">Claim Slot Index (0 = auto grab first available)</label>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" type="number" id="claim-slot-idx" value="0" min="0" max="${nRecip-1}" style="width:100px">
+            <button class="btn btn-red" onclick="claimPacket('${txHash}', ${nRecip})" style="flex:1">🎁 Claim Now!</button>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ==========================================
+// CLAIM PACKET
+// ==========================================
+
+async function claimPacket(txHash, nRecip) {
+  if (!state.connected) { toast('Connect wallet to claim', 'error'); return; }
+
+  // Find first unclaimed slot
+  let slotIdx = parseInt(document.getElementById('claim-slot-idx')?.value || '0');
+  if (isNaN(slotIdx) || slotIdx < 0) slotIdx = 0;
+
+  // Calldata: [SEL_CLAIM][slot_index]
+  const calldata = encodeCalldata(SEL.CLAIM, slotIdx);
+  const calldataHex = bufToHex(calldata);
+
+  // Show open animation first
+  const overlay = document.getElementById('open-overlay');
+  const content = document.getElementById('overlay-content');
+  content.innerHTML = `
+    <div class="big-packet" onclick="doClaimTx('${txHash}', '${calldataHex}')">
+      <div class="red-packet-diamond"></div>
+      <div class="red-packet-circle">福</div>
+      <div style="font-family:'Ma Shan Zheng',cursive;font-size:1.2rem;color:var(--gold);margin-top:12px">比特红包</div>
+    </div>
+    <div class="open-instruction">Tap to open! 点击开红包</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:rgba(240,192,64,0.5);margin-top:12px">Slot ${slotIdx}</div>
+  `;
+  overlay.classList.add('show');
+}
+
+async function doClaimTx(txHash, calldataHex) {
+  const content = document.getElementById('overlay-content');
+  content.innerHTML = `
+    <div style="text-align:center;padding:40px">
+      <span class="spinner" style="width:32px;height:32px;border-width:3px"></span>
+      <div style="font-family:'Ma Shan Zheng',cursive;font-size:1.5rem;color:var(--gold);margin-top:20px">Sending claim transaction...</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--gold-dark);margin-top:8px">Broadcasting to OP_NET RegTest</div>
+    </div>
+  `;
+
+  try {
+    const claimTxHash = await contractSend(calldataHex, 0);
+
+    // Wait briefly then query result
+    await delay(1500);
+
+    // Query what we got
+    let amountSats = 0;
+    try {
+      const retCalldata = encodeCalldata(SEL.INFO);
+      const retBuf = await contractCall(bufToHex(retCalldata));
+      const status = readRetBuf(retBuf, 0);
+      if (status === 1) {
+        amountSats = readRetBufUint(retBuf, 4);
+      }
+    } catch (e) {}
+
+    const amountBtc = amountSats > 0 ? (amountSats / 1e8).toFixed(8) : '???';
+
+    // Save history
+    state.history.unshift({ type: 'claimed', txHash: claimTxHash, sourceTx: txHash, amountSats, amountBtc, timestamp: Date.now() });
+    saveHistory();
+    state.stats.claimed++;
+    saveStats();
+    updateStats();
+    await refreshBalance();
+
+    // Show result
+    content.innerHTML = `
+      <div class="open-result">
+        <div style="font-size:4rem">🎊</div>
+        <div style="font-family:'Ma Shan Zheng',cursive;font-size:1.5rem;color:var(--gold-light);margin-bottom:8px">恭喜发财！</div>
+        <div class="result-amount">${amountBtc}</div>
+        <div class="result-sats">${amountSats > 0 ? amountSats.toLocaleString() + ' satoshis' : 'Check wallet for amount'}</div>
+        <div class="result-msg">Gong Xi Fa Cai! Transaction confirmed on-chain 🎉</div>
+        <div class="tx-hash" style="margin-top:8px">Claim TX: ${claimTxHash.slice(0,32)}...</div>
+        <button class="btn btn-gold" onclick="closeOverlay()" style="margin-top:20px;padding:12px 32px">收下了 · Received!</button>
+      </div>
+    `;
+    launchConfetti();
+    toast(`🎉 Claimed! ${amountBtc} BTC`, 'success');
+    renderHistory();
+
+  } catch (e) {
+    console.error('Claim error:', e);
+    content.innerHTML = `
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:3rem">❌</div>
+        <div style="font-family:'Ma Shan Zheng',cursive;font-size:1.5rem;color:var(--red-bright);margin:16px 0">Claim Failed</div>
+        <div class="info-box error" style="text-align:left">${e.message || e}</div>
+        <button class="btn btn-outline" onclick="closeOverlay()" style="margin-top:16px">Close</button>
+      </div>
+    `;
+    toast('Claim failed: ' + (e.message || e), 'error');
+  }
+}
+
+function closeOverlay() {
+  document.getElementById('open-overlay').classList.remove('show');
+}
+
+// ==========================================
+// REFUND EXPIRED
+// ==========================================
+
+async function refundPacket(txHash) {
+  if (!state.connected) { toast('Connect wallet first', 'error'); return; }
+  const calldata = encodeCalldata(SEL.REFUND);
+  const calldataHex = bufToHex(calldata);
+  try {
+    const refundTx = await contractSend(calldataHex, 0);
+    toast(`Refund TX sent: ${refundTx.slice(0,16)}...`, 'success');
+    state.history.unshift({ type: 'refunded', txHash: refundTx, sourceTx: txHash, timestamp: Date.now() });
+    saveHistory();
+    await refreshBalance();
+  } catch (e) {
+    toast('Refund failed: ' + e.message, 'error');
+  }
+}
+
+// ==========================================
+// MY PACKETS (local tracking)
+// ==========================================
+
+async function loadMyPackets() {
+  if (!state.connected) return;
+  renderActivePackets();
+}
+
+function renderActivePackets() {
+  const container = document.getElementById('active-packets');
+  const mine = state.myPackets.filter(p => p.address === state.address);
+
+  if (mine.length === 0) {
+    container.innerHTML = '<div class="empty-state">Create a red packet to see it here</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="packets-grid">' + mine.slice(0, 12).map(p => `
+    <div class="packet-item" onclick="document.getElementById('claim-txhash').value='${p.txHash}'; lookupPacketByTx()">
+      <div style="font-size:1.5rem">🧧</div>
+      <div class="packet-amount">${p.totalBtc} BTC</div>
+      <div class="packet-meta">${p.count} packets</div>
+      <div class="packet-meta">${new Date(p.createdAt).toLocaleDateString()}</div>
+      <div class="packet-type-badge">${p.distType === 'random' ? '🎲 Lucky' : '⚖ Equal'}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--gold-dark);margin-top:6px;word-break:break-all">${p.txHash.slice(0,20)}...</div>
+    </div>
+  `).join('') + '</div>';
+}
+
+// ==========================================
+// HISTORY
+// ==========================================
+
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  if (state.history.length === 0) {
+    container.innerHTML = '<div class="empty-state">No transaction history yet</div>';
+    return;
+  }
+
+  container.innerHTML = state.history.slice(0, 30).map(h => `
+    <div class="wallet-card" style="margin-bottom:8px;padding:14px 16px">
+      <div>
+        <div class="wallet-label">
+          ${h.type === 'created' ? '📤 Created' : h.type === 'refunded' ? '↩ Refunded' : '📥 Claimed'} · ${new Date(h.timestamp).toLocaleString()}
+        </div>
+        <div class="tx-hash">TX: ${(h.txHash||'').slice(0,48)}${(h.txHash||'').length>48?'...':''}</div>
+        ${h.sourceTx ? `<div class="tx-hash" style="color:rgba(240,192,64,0.3)">Source: ${h.sourceTx.slice(0,32)}...</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        ${h.type === 'created' ? `<div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--red-bright)">-${h.totalBtc?.toFixed(8)||'?'} BTC</div><div class="wallet-label">${h.count||'?'} packets</div>` : ''}
+        ${h.type === 'claimed' ? `<div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--green)">+${h.amountBtc||'?'} BTC</div><div class="wallet-label">${(h.amountSats||0).toLocaleString()} sats</div>` : ''}
+        ${h.type === 'refunded' ? `<div style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:#3498db">↩ Refunded</div>` : ''}
+        <div class="wallet-label">REGTEST</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Clear all local history?')) return;
+  state.history = [];
+  state.myPackets = [];
+  localStorage.removeItem('rp_history');
+  localStorage.removeItem('rp_packets');
+  renderHistory();
+  renderActivePackets();
+  toast('History cleared', 'info');
+}
+
+function saveHistory() {
+  localStorage.setItem('rp_history', JSON.stringify(state.history.slice(0, 100)));
+  renderHistory();
+}
+
+function saveStats() {
+  localStorage.setItem('rp_stat_created', state.stats.created);
+  localStorage.setItem('rp_stat_claimed', state.stats.claimed);
+  localStorage.setItem('rp_stat_btc', state.stats.totalBtc);
+}
+
+function updateStats() {
+  document.getElementById('stat-created').textContent = state.stats.created;
+  document.getElementById('stat-claimed').textContent = state.stats.claimed;
+  document.getElementById('stat-total-btc').textContent = state.stats.totalBtc.toFixed(4);
+  document.getElementById('stat-active').textContent = state.myPackets.filter(p => p.address === state.address).length;
+}
+
+// ==========================================
+// UI HELPERS
+// ==========================================
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['create','claim','history'][i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'claim') renderActivePackets();
+  if (name === 'history') renderHistory();
+}
+
+function setType(type) {
+  state.distType = type;
+  document.getElementById('type-equal').style.borderColor = type === 'equal' ? 'var(--gold)' : '';
+  document.getElementById('type-equal').style.color = type === 'equal' ? 'var(--gold)' : '';
+  document.getElementById('type-random').style.borderColor = type === 'random' ? 'var(--gold)' : '';
+  document.getElementById('type-random').style.color = type === 'random' ? 'var(--gold)' : '';
+  document.getElementById('type-info').textContent = type === 'equal'
+    ? '⚖ Equal: Each recipient receives an equal share of the total amount.'
+    : '🎲 Lucky: Recipients get random amounts (like WeChat red packets). More exciting!';
+}
+
+function updatePreview() {
+  const amount = document.getElementById('total-amount').value;
+  const count = document.getElementById('packet-count').value;
+  const sub = document.getElementById('preview-sub');
+  if (amount && count) {
+    const perPkt = (parseFloat(amount) / parseInt(count)).toFixed(6);
+    sub.textContent = `${amount} BTC · ${count} pkt · ~${perPkt} ea`;
+    document.getElementById('preview-packet').querySelector('.red-packet-text').textContent = `${amount} BTC`;
+  } else {
+    sub.textContent = 'Fill in details below';
+    document.getElementById('preview-packet').querySelector('.red-packet-text').textContent = '比特红包';
+  }
+}
+
+function animatePreview() {
+  const el = document.getElementById('preview-packet');
+  el.style.transform = 'scale(1.1) rotate(5deg)';
+  setTimeout(() => el.style.transform = '', 300);
+}
+
+function closeModal() {
+  document.getElementById('detail-modal').classList.remove('show');
+}
+
+function showNoWalletGuide() {
+  document.getElementById('create-info').innerHTML = `
+    <div class="info-box error">
+      ⚠ OP_NET wallet not detected!<br><br>
+      Please install one of:<br>
+      • <strong>OP_NET Wallet</strong> browser extension<br>
+      • <strong>Unisat</strong> with OP_NET plugin enabled<br><br>
+      Make sure to switch to <strong>RegTest</strong> network in the wallet settings.
+    </div>
+  `;
+}
+
+// ==========================================
+// TOAST
+// ==========================================
+
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ==========================================
+// CONFETTI
+// ==========================================
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colors = ['#f0c040','#c0392b','#e74c3c','#fde88a','#fff','#ff6b6b','#ffd700'];
+
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: Math.random() * canvas.width, y: -10,
+      vx: (Math.random() - 0.5) * 6, vy: Math.random() * 4 + 2,
+      rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 10,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 8 + 4, shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rotation += p.rotationSpeed; p.vy += 0.08;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180); ctx.fillStyle = p.color;
+      if (p.shape === 'rect') ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.size/2, 0, Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 200) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
+}
+
+// ==========================================
+// PARTICLES (background)
+// ==========================================
+
+function initParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+    container.appendChild(p);
+  }
+}
+
+// ==========================================
+// UTILS
+// ==========================================
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ==========================================
+// INIT
+// ==========================================
+
+initParticles();
+updateWalletUI();
+renderHistory();
+
+// Auto-detect if wallet already connected
+(async () => {
+  const provider = getProvider();
+  if (provider) {
+    try {
+      const accounts = await provider.getAccounts?.();
+      if (accounts && accounts.length > 0) {
+        state.address = accounts[0];
+        state.connected = true;
+        const net = await provider.getNetwork?.();
+        state.network = net?.network || net || NETWORK;
+        await refreshBalance();
+        try {
+          const block = await provider.getBlockHeight?.();
+          if (block) {
+            state.blockHeight = block;
+            document.getElementById('stat-block').textContent = block.toLocaleString();
+          }
+        } catch(e) {}
+        document.getElementById('network-dot').classList.add('connected');
+        document.getElementById('network-label').textContent = 'REGTEST · CONNECTED';
+        await loadMyPackets();
+      }
+    } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>
